@@ -5,6 +5,15 @@
 
 int exponent_constant = 127;
 
+void viewVector(std::vector<int> data)
+{
+    for (int i = 0; i < data.size(); i++)
+    {
+        std::cout << data.at(i) << " ";
+    }
+    std::cout << std::endl;
+}
+
 std::string vector_to_string(std::vector<int> vector)//Вектор к строке
 {
     std::string buffer_string = "";
@@ -129,6 +138,27 @@ std::vector<int> decimal_to_binary_direct_order(int decimal)//десятично
     return bits;
 }
 
+int from_binary_to_decimal(std::vector<int> binary_number)
+{
+    int result = 0;
+    if (binary_number.at(0) == 1)
+    {
+        result += (-binary_number.at(1)) * pow(2, binary_number.size() - 2);
+        for (int i = 2; i < binary_number.size(); i++)
+        {
+            result += binary_number.at(i) * pow(2, binary_number.size() - (i + 1));
+        }
+    }
+    else
+    {
+        for (int i = 0; i < binary_number.size(); i++)
+        {
+            result += binary_number.at(i) * pow(2, binary_number.size() - (i + 1));
+        }
+    }
+    return result;
+}
+
 std::vector<int> decimal_to_binary_reverse_order(int decimal) //десятичку к бинарке обратного порядка
 {
     if (decimal >= 0)
@@ -217,11 +247,11 @@ std::vector<std::vector<int>> length_comparison(std::vector<int> vector1, std::v
     }
     if (vector1.at(0) == 0 and vector2.at(0) == 0)
     {
-        for (int i = 0; i < max_len - vector2.size(); i++)
+        for (int i = vector2.size(); i < max_len ; i++)
         {
             vector2.insert(vector2.begin(), 0);
         }
-        for (int i = 0; i < max_len - vector1.size(); i++)
+        for (int i = vector1.size(); i < max_len; i++)
         {
             vector1.insert(vector1.begin(), 0);
         }
@@ -447,7 +477,7 @@ std::vector<int> from_decimal_to_float(std::string decimal)
     if (flag == -1)
     {
         
-        buffer = decimal_to_binary_direct_order(exponent_constant + ((flag - find_dot(decimal) - 1) * exp_sign));
+        buffer = decimal_to_binary_direct_order(exponent_constant + ((find_one(decimal) - find_dot(decimal) - 1) * exp_sign));
         for (int i = buffer.size() - 1; i > buffer.size() - 9; i--)
         {
             exp_bits.push_back(buffer.at(i));
@@ -456,7 +486,7 @@ std::vector<int> from_decimal_to_float(std::string decimal)
     }
     else
     {
-        buffer = decimal_to_binary_direct_order(exponent_constant + ((find_dot(decimal) - flag - 1) * exp_sign));
+        buffer = decimal_to_binary_direct_order(exponent_constant + ((find_dot(decimal) - find_one(decimal) - 1) * exp_sign));
         for (int i = buffer.size() - 1; i > buffer.size() - 9; i--)
         {
             exp_bits.push_back(buffer.at(i));
@@ -485,7 +515,11 @@ std::vector<int> from_decimal_to_float(std::string decimal)
     {
         result.push_back(mantissa.at(i));
     }
-
+    for (int i = result.size(); i < 32; i++)
+    {
+        result.push_back(0);
+    }
+    
 
     return result;
 }
@@ -559,18 +593,20 @@ double from_float_to_decimal(std::vector<int> number)
     {
         sing = 1;
     }
-    for(int i = 1; i < 8; i++)
+    for(int i = 1; i < 9; i++)
     {
         exp += number.at(i) * (pow(2, (8 - i)));
     }
-    exp -= 127;
+    exp -= exponent_constant;
     for(int i = 9; i < 32; i++)
     {
         frac += number.at(i) * (pow(2, -(i - 8)));
     }
     result = sing * (1 + frac) * pow(2, exp);
+    result = result - (result - (int)result)/2;
     return result;
 }
+
 
 
 std::string delDot(std::string data)
@@ -587,6 +623,8 @@ std::string delDot(std::string data)
 std::vector<int> summ_of_floating(double decimal1, double decimal2)
 {
     std::vector<int> decimal1_buffer = to_fix(decimal1), decimal2_buffer = to_fix(decimal2), result;
+    viewVector(decimal1_buffer);
+    viewVector(decimal2_buffer);
     std::string decimal1_str = vector_to_string(decimal1_buffer), decimal2_str = vector_to_string(decimal2_buffer), numsumm1 = "", numsumm2 = "", temp_floating_summ, bufferResult = "";
     int unitnum1 = find_one_before_dot(decimal1_str), unitnum2 = find_one_before_dot(decimal2_str), exp1, exp2, diff_exp, add_numbers;
 
@@ -620,7 +658,8 @@ std::vector<int> summ_of_floating(double decimal1, double decimal2)
         }
         numsumm1 = decimal1_str;
         numsumm1 = delDot(numsumm1);
-        numsumm2 = delDot(decimal2_str);
+        numsumm2 = delDot(numsumm2);
+
     }
     else
     {
@@ -636,7 +675,7 @@ std::vector<int> summ_of_floating(double decimal1, double decimal2)
         numsumm1 = delDot(numsumm1);
         numsumm2 = delDot(decimal2_str);
     }
-
+    std::cout << numsumm1 << "\n" << numsumm2 << "\n";
     temp_floating_summ = vector_to_string(sum_of_binary_numbers(string_to_vector(numsumm1), string_to_vector(numsumm2)));
     add_numbers = temp_floating_summ.size() - numsumm2.size();
     for (int i = 0; i < (max_int(find_dot(decimal1_str), find_dot(decimal2_str)) + add_numbers); i++)
@@ -650,48 +689,12 @@ std::vector<int> summ_of_floating(double decimal1, double decimal2)
     }
 
     result = from_decimal_to_float(bufferResult);
-    //for (int i = 0; i < (max_int(find_dot(decimal1_str), find_dot(decimal2_str)) + add_numbers); i++)
-    //{
-    //    result.push_back(temp_floating_summ.at(i) - 48);
-    //}
-    //result.push_back(-1);
-    //for (int i = (max_int(exp1, exp2) + 1 + add_numbers); i < temp_floating_summ.size(); i++)
-    //{
-    //    result.push_back(temp_floating_summ.at(i) - 48);
-    //}
-
     return result;
 }
 
-int from_binary_to_decimal(std::vector<int> binary_number)
-{
-    int result = 0;
-    if (binary_number.at(0) == 1)
-    {
-        result += (-binary_number.at(1)) * pow(2, binary_number.size() - 2);
-        for (int i = 2; i < binary_number.size(); i++)
-        {
-            result += binary_number.at(i) * pow(2, binary_number.size() - (i + 1));
-        }
-    }
-    else
-    {
-        for (int i = 0; i < binary_number.size(); i++)
-        {
-            result += binary_number.at(i) * pow(2, binary_number.size() - (i + 1));
-        }
-    }
-    return result;
-}
 
-void viewVector(std::vector<int> data)
-{
-    for (int i = 0; i < data.size(); i++)
-    {
-        std::cout << data.at(i) << " ";
-    }
-    std::cout << std::endl;
-}
+
+
 
 int main()
 {
@@ -796,6 +799,7 @@ int main()
             std::cout << "in decimal: " << from_binary_to_decimal(binary_division(binary1, binary2)) << std::endl;
             break;
         case 5:
+            viewVector(summ_of_floating(decimal1, decimal2));
             std::cout << from_float_to_decimal(summ_of_floating(decimal1, decimal2)) << "\n";
             break;
         }
